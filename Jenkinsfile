@@ -1,7 +1,37 @@
-pipeline{
-    agent any
-    
-    stages{
+pipeline {
+    agent any // Or a specific agent label where Minikube can run, e.g., agent { label 'minikube-agent' }
+
+    environment {
+        // Minikube typically sets KUBECONFIG automatically after start
+        // Ensure this variable is present for kubectl and terraform
+        KUBECONFIG = "${env.HOME}/.kube/config"
+    }
+
+    stages {
+        stage('Start Minikube') {
+            steps {
+                script {
+                    // Stop/delete existing minikube instance to ensure a clean start
+                    sh 'minikube stop || true' // Stop if running
+                    sh 'minikube delete || true' // Delete if exists
+                    
+                    // Start Minikube. Using --driver=docker is common.
+                    // Adjust memory and CPU based on your Jenkins agent resources.
+                    echo "Starting Minikube..."
+                    sh 'minikube start --driver=docker --memory 2000 --cpus 2'
+                    
+                    // Verify Minikube is running and accessible
+                    sh 'kubectl cluster-info'
+                    sh 'kubectl get nodes'
+                    sh 'minikube status'
+                    
+                    // Wait for the Kubernetes API server to be ready and accessible
+                    // This is crucial to avoid "connection refused" errors
+                    sh 'kubectl wait --for=condition=ready node/minikube --timeout=300s'
+                    sh 'kubectl wait --for=condition=Available deployment/coredns -n kube-system --timeout=300s'
+                }
+            }
+        }
         stage('Terraform init'){
             steps{
                 sh 'terraform init -input=false'
@@ -33,16 +63,19 @@ pipeline{
             }
         }
     }
-}
-
-post{
-    always{
-        cleanWs()
-    }
-    success{
-        echo 'Terraform pipeline completed successfully'
-    }
-    failure{
-        echo 'Terraform pipeline failed'
+    post {
+        always {
+            cleanWs() // Cleans the workspace
+            // Always stop and delete Minikube to free up resources
+            echo "Stopping and deleting Minikube..."
+            sh 'minikube stop || true'
+            sh 'minikube delete || true'
+        }
+        success {
+            echo 'Terraform pipeline completed successfully'
+        }
+        failure {
+            echo 'Terraform pipeline failed'
+        }
     }
 }
