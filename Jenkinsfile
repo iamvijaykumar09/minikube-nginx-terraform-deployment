@@ -1,9 +1,17 @@
 pipeline{
     agent any
 
+    environment{
+        KUBECONFIG = "${WORKSPACE}/.kube/config"
+    }
+
     stages{
         stage('Terraform init'){
             steps{
+                sh 'mkdir -p ~/.kube'
+                withCredentials([file(credentialsId: 'minikube-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+                    sh 'cp $KUBECONFIG_FILE ~/.kube/config'
+                }
                 sh 'terraform init -input=false'
             }
         }
