@@ -1,6 +1,6 @@
 #Configuring Kubernetes Provider
 provider "kubernetes" {
-  config_path = "~/.kube/config"
+  config_path = "/home/vijay/.kube/config"
 }
 
 #Defining the Nginx Deployment
