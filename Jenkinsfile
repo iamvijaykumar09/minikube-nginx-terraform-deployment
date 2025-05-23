@@ -1,5 +1,5 @@
 pipeline {
-    agent any // Or a specific agent label where Minikube can run, e.g., agent { label 'minikube-agent' }
+    agent any 
 
     environment {
         // Minikube typically sets KUBECONFIG automatically after start
@@ -62,20 +62,5 @@ pipeline {
                 sh 'terraform apply -input=false tfplan'
             }
         }
-    }
-    post {
-        always {
-            cleanWs() // Cleans the workspace
-            // Always stop and delete Minikube to free up resources
-            echo "Stopping and deleting Minikube..."
-            sh 'minikube stop || true'
-            sh 'minikube delete || true'
-        }
-        success {
-            echo 'Terraform pipeline completed successfully'
-        }
-        failure {
-            echo 'Terraform pipeline failed'
-        }
-    }
+   }
 }
