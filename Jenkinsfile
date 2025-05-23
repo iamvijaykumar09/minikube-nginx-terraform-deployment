@@ -13,7 +13,7 @@ pipeline {
                 withCredentials([file(credentialsId: 'minikube-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                     sh 'cp $KUBECONFIG_FILE ~/.kube/config'
                 }
-                sh 'sudo chmod +x ~/.kube/config'
+                sh 'chmod +x ~/.kube/config'
                 sh 'terraform init -input=false'
             }
         }
