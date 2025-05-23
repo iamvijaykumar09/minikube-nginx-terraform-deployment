@@ -81,15 +81,22 @@ pipeline {
         }
 
         // ADD THIS NEW STAGE HERE
-        stage('Get Service URL') {
+       stage('Get Service URL') {
             steps {
                 script {
-                    echo "Getting Minikube IP and Service URL..."
+                    echo "Getting Minikube IP..."
                     def minikubeIp = sh(returnStdout: true, script: 'minikube ip').trim()
-                    def serviceUrl = sh(returnStdout: true, script: 'minikube service nginx-service --url').trim()
-
                     echo "Minikube IP: ${minikubeIp}"
-                    echo "Nginx Service URL: ${serviceUrl}"
+
+                    echo "Getting Nginx service NodePort..."
+                    // Get the NodePort for the nginx-service
+                    def nodePort = sh(returnStdout: true, script: "kubectl get service nginx-service -o jsonpath='{.spec.ports[0].nodePort}'").trim()
+                    echo "Nginx Service NodePort: ${nodePort}"
+
+                    def finalUrl = "http://${minikubeIp}:${nodePort}"
+                    echo "*****************************************************"
+                    echo "Nginx Service URL (copy this): ${finalUrl}"
+                    echo "*****************************************************"
                 }
             }
         }
