@@ -1,5 +1,6 @@
 #Configuring Kubernetes Provider
 provider "kubernetes" {
+  config_path = "~/.kube/config"
 }
 
 #Defining the Nginx Deployment
