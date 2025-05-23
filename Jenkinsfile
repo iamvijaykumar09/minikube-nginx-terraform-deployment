@@ -13,6 +13,38 @@ pipeline {
                 checkout scm
             }
         }
+        
+        stage('Start Minikube') {
+            steps {
+                script {
+                    echo "Stopping any existing Minikube instances..."
+                    sh 'minikube stop || true' // stop any running instance, ignore errors if none exist
+                    echo "Deleting any old Minikube clusters..."
+                    sh 'minikube delete || true' // delete any old cluster, ignore errors if none exist
+
+                    echo "Starting Minikube..."
+                    // Start Minikube with Docker driver and increased resources
+                    sh 'minikube start --driver=docker --memory 1900 --cpus 2'
+
+                    // Verify cluster is running and nodes are ready
+                    echo "Verifying Kubernetes cluster info..."
+                    sh 'kubectl cluster-info'
+                    echo "Checking Kubernetes nodes status..."
+                    sh 'kubectl get nodes'
+                    echo "Checking Minikube status..."
+                    sh 'minikube status'
+
+                    // Wait for node to be ready
+                    echo "Waiting for Minikube node to be ready..."
+                    sh 'kubectl wait --for=condition=ready node/minikube --timeout=300s'
+
+                    // Wait for CoreDNS deployment to be available
+                    echo "Waiting for CoreDNS deployment to be available..."
+                    sh 'kubectl wait --for=condition=Available deployment/coredns -n kube-system --timeout=300s'
+                }
+            }
+        }
+        
         stage('Terraform init') {
             steps {
                 sh 'terraform init -input=false'
