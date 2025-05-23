@@ -64,14 +64,3 @@ pipeline {
         }
    }
 }
-post {
-    always{
-        cleanWS()
-    }
-    success{
-        echo 'Pipeline executed successfully'
-    }
-    failure{
-        echo 'pipeline failed'
-    }
-}
